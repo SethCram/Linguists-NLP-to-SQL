@@ -17,13 +17,13 @@ import os
 from contextlib import nullcontext
 from transformers.hf_argparser import HfArgumentParser
 from transformers.models.auto import AutoConfig, AutoTokenizer, AutoModelForSeq2SeqLM
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from uvicorn import run
 from sqlite3 import Connection, connect, OperationalError
 from seq2seq.utils.pipeline import Text2SQLGenerationPipeline, Text2SQLInput, get_schema
 from seq2seq.utils.picard_model_wrapper import PicardArguments, PicardLauncher, with_picard
 from seq2seq.utils.dataset import DataTrainingArguments
-
+import shutil
 
 @dataclass
 class BackendArguments:
@@ -142,6 +142,18 @@ def main():
                 return [response(query=output["generated_text"], conn=conn) for output in outputs]
             finally:
                 conn.close()
+
+        @app.post("/upload/")
+        def upload(file: UploadFile = File(...)):
+            try:
+                with open(file.filename, 'wb') as f:
+                    shutil.copyfileobj(file.file, f)
+            except Exception:
+                return {"message": "There was an error uploading the file"}
+            finally:
+                file.file.close()
+                
+            return {"message": f"Successfully uploaded {file.filename}"}
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

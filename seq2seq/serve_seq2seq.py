@@ -136,24 +136,23 @@ def main():
                     num_return_sequences=data_training_args.num_return_sequences
                 )
             except OperationalError as e:
-                raise HTTPException(status_code=404, detail=e.args[0])
+                raise HTTPException(status_code=400, detail=e.args[0])
             try:
                 conn = connect(backend_args.db_path + "/" + db_id + "/" + db_id + ".sqlite")
                 return [response(query=output["generated_text"], conn=conn) for output in outputs]
             finally:
                 conn.close()
-
-        @app.post("/upload/")
-        def upload(file: UploadFile = File(...)):
-            try:
-                with open(file.filename, 'wb') as f:
-                    shutil.copyfileobj(file.file, f)
-            except Exception:
-                return {"message": "There was an error uploading the file"}
-            finally:
-                file.file.close()
-                
-            return {"message": f"Successfully uploaded {file.filename}"}
+        
+        #@app.post("/upload/")
+        #def upload(file: UploadFile = File(...)):
+        #    try:
+        #        with open(file.filename, 'wb') as f:
+        #            shutil.copyfileobj(file.file, f)
+        #    except Exception:
+        #        return {"message": "There was an error uploading the file"}
+        #    finally:
+        #        file.file.close()    
+        #    return {"message": f"Successfully uploaded {file.filename}"}
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

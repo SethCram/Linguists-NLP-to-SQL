@@ -1,4 +1,4 @@
-GIT_HEAD_REF := $(shell git rev-parse HEAD)
+GIT_HEAD_REF := $(shell git rev-parse HEAD) #6a252386bed6d4233f0f13f4562d8ae8608e7445
 
 BASE_IMAGE := pytorch/pytorch:1.9.0-cuda11.1-cudnn8-devel
 

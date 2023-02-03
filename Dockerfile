@@ -8,8 +8,11 @@ FROM $BASE_IMAGE as dev
 ARG TOOLKIT_USER_ID=13011
 ARG TOOLKIT_GROUP_ID=13011
 
+RUN gpg --no-default-keyring --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys A4B469963BF863CC
+
 RUN apt-get update \
     # Required to save git hashes
+    && gpg --no-default-keyring --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys A4B469963BF863CC \
     && apt-get install -y -q git curl unzip make gettext \
     && rm -rf /var/lib/apt/lists/*
 

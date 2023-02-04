@@ -143,16 +143,31 @@ def main():
             finally:
                 conn.close()
         
-        #@app.post("/upload/")
-        #def upload(file: UploadFile = File(...)):
-        #    try:
-        #        with open(file.filename, 'wb') as f:
-        #            shutil.copyfileobj(file.file, f)
-        #    except Exception:
-        #        return {"message": "There was an error uploading the file"}
-        #    finally:
-        #        file.file.close()    
-        #    return {"message": f"Successfully uploaded {file.filename}"}
+        @app.post("/upload/")
+        def upload(file: UploadFile = File(...)):
+            
+            #separate file name into name + ext
+            fileName, fileExtension = os.path.splitext(file.filename)
+            
+            #path to new db dir
+            fileLocationPath = os.path.join(backend_args.db_path, fileName)
+            
+            try:
+                os.mkdir(fileLocationPath)
+            except Exception:
+                return {"message": "Directory creation failed. (Database using that same name has probably already been uploaded. Rename your database file.)"}
+            
+            #path to new db file
+            fileLocation = fileLocationPath + "/" + fileName + ".sqlite"
+            
+            try:
+                with open(fileLocation, 'wb') as fileObj:
+                    shutil.copyfileobj(file.file, fileObj)
+            except Exception:
+                return {"message": "There was an error copying the file"}
+            finally:
+                file.file.close()    
+            return {"message": f"Successfully uploaded {file.filename} to {fileLocation}"}
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

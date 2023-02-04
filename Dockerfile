@@ -132,6 +132,9 @@ RUN cd /app/third_party/fbthrift \
     && cd .. \
     && rm -rf _build
 
+#fastapi - Form data requires "python-multipart" to be installed
+RUN pip install python-multipart
+
 # Install Rust toolchain
 ENV RUSTUP_HOME=/app/.local/rustup \
     CARGO_HOME=/app/.local/cargo \

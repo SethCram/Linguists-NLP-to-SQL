@@ -18,6 +18,7 @@ from contextlib import nullcontext
 from transformers.hf_argparser import HfArgumentParser
 from transformers.models.auto import AutoConfig, AutoTokenizer, AutoModelForSeq2SeqLM
 from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi.responses import FileResponse
 from uvicorn import run
 from sqlite3 import Connection, connect, OperationalError
 from seq2seq.utils.pipeline import Text2SQLGenerationPipeline, Text2SQLInput, get_schema
@@ -147,45 +148,57 @@ def main():
         def upload(file: UploadFile = File(...)):
             
             #separate file name into name + ext
-            fileName, fileExtension = os.path.splitext(file.filename)
+            db_id, file_ext = os.path.splitext(file.filename)
             
             #path to new db dir
-            fileLocationPath = os.path.join(backend_args.db_path, fileName)
+            db_folder_path = os.path.join(backend_args.db_path, db_id)
             
             try:
-                os.mkdir(fileLocationPath)
+                os.mkdir(db_folder_path)
             except FileExistsError:
                 raise HTTPException(status_code=400, detail="Directory creation failed. Database using that same name has probably already been uploaded. Rename your database file.")
             except Exception:
                 raise HTTPException(status_code=500, detail="Directory creation failed.")
             
             #path to new db file
-            fileLocation = fileLocationPath + "/" + fileName + ".sqlite"
+            new_file_path = os.path.join(db_folder_path, db_id + ".sqlite")
             
             try:
-                with open(fileLocation, 'wb') as fileObj:
-                    shutil.copyfileobj(file.file, fileObj)
+                with open(new_file_path, 'wb') as file_obj:
+                    shutil.copyfileobj(file.file, file_obj)
             except Exception:
                 raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
             finally:
                 file.file.close()    
-            return {"message": f"Successfully uploaded {file.filename} to {fileLocation}"}
+            return {"message": f"Successfully uploaded {file.filename} to {new_file_path}"}
 
         @app.get("/getDatabases/")
         def getDatabases():
             try:
                 #get all names in db folder
-                databaseFolders = os.listdir(backend_args.db_path)
+                db_folders = os.listdir(backend_args.db_path)
             except:
                 raise HTTPException(status_code=500, detail="There was an error when attempting to list all the database folders.")
             
             #take only the directories within the db folder names
-            return [name for name in databaseFolders if os.path.isdir(os.path.join(backend_args.db_path, name))]
+            return [name for name in db_folders if os.path.isdir(os.path.join(backend_args.db_path, name))]
         
-        #@app.get("/getDatabases/{db_id}")
-        #def getDatabaseFile(db_id: str):
-        #    try:
-        #        return 
+        @app.get("/getDatabases/{file_name}")
+        def getDatabaseFile(file_name: str, responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}}):
+            
+            #separate file name into name + ext (just incase sent w/ an ext)
+            db_id, file_ext = os.path.splitext(file_name)
+            
+            db_file_name = db_id + ".sqlite"
+            
+            #construct path to db file
+            db_file_path = os.path.join(backend_args.db_path, db_file_name)
+            
+            #if file exists, return it
+            if(os.path.exists(db_file_path)):
+                return FileResponse(db_file_path, mediaType="application/vnd.sqlite3", filename=f"{db_file_name}")
+            else:
+                raise HTTPException(status_code=404, detail="Database file not found.")
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

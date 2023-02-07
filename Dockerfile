@@ -134,6 +134,8 @@ RUN cd /app/third_party/fbthrift \
 
 #fastapi - Form data requires "python-multipart" to be installed
 RUN pip install python-multipart
+#fastapi requires extra module for file retrieval 
+RUN pip install aiofiles
 
 # Install Rust toolchain
 ENV RUSTUP_HOME=/app/.local/rustup \

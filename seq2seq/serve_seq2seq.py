@@ -136,7 +136,7 @@ def main():
                     num_return_sequences=data_training_args.num_return_sequences
                 )
             except OperationalError as e:
-                raise HTTPException(status_code=400, detail=e.args[0])
+                raise HTTPException(status_code=404, detail=e.args[0])
             try:
                 conn = connect(backend_args.db_path + "/" + db_id + "/" + db_id + ".sqlite")
                 return [response(query=output["generated_text"], conn=conn) for output in outputs]
@@ -154,8 +154,10 @@ def main():
             
             try:
                 os.mkdir(fileLocationPath)
+            except FileExistsError:
+                raise HTTPException(status_code=400, detail="Directory creation failed. Database using that same name has probably already been uploaded. Rename your database file.")
             except Exception:
-                return {"message": "Directory creation failed. (Database using that same name has probably already been uploaded. Rename your database file.)"}
+                raise HTTPException(status_code=500, detail="Directory creation failed.")
             
             #path to new db file
             fileLocation = fileLocationPath + "/" + fileName + ".sqlite"
@@ -164,10 +166,21 @@ def main():
                 with open(fileLocation, 'wb') as fileObj:
                     shutil.copyfileobj(file.file, fileObj)
             except Exception:
-                return {"message": "There was an error copying the file"}
+                raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
             finally:
                 file.file.close()    
             return {"message": f"Successfully uploaded {file.filename} to {fileLocation}"}
+
+        @app.get("/getDatabases/")
+        def getDatabases():
+            try:
+                #get all names in db folder
+                databaseFolders = os.listdir(backend_args.db_path)
+            except:
+                raise HTTPException(status_code=500, detail="There was an error when attempting to list all the database folders.")
+            
+            #take only the directories within the db folder names
+            return [name for name in databaseFolders if os.path.isdir(name)]
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

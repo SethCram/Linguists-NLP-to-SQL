@@ -180,7 +180,12 @@ def main():
                 raise HTTPException(status_code=500, detail="There was an error when attempting to list all the database folders.")
             
             #take only the directories within the db folder names
-            return [name for name in databaseFolders if os.path.isdir(name)]
+            return [name for name in databaseFolders if os.path.isdir(os.path.join(backend_args.db_path, name))]
+        
+        #@app.get("/getDatabases/{db_id}")
+        #def getDatabaseFile(db_id: str):
+        #    try:
+        #        return 
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

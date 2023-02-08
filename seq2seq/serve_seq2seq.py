@@ -183,8 +183,8 @@ def main():
             #take only the directories within the db folder names
             return [name for name in db_folders if os.path.isdir(os.path.join(backend_args.db_path, name))]
         
-        @app.get("/getDatabases/{file_name}")
-        def getDatabaseFile(file_name: str, responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}}):
+        @app.get("/getDatabases/{file_name}", responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}})
+        def getDatabaseFile(file_name: str ):
             
             #separate file name into name + ext (just incase sent w/ an ext)
             db_id, file_ext = os.path.splitext(file_name)
@@ -192,13 +192,13 @@ def main():
             db_file_name = db_id + ".sqlite"
             
             #construct path to db file
-            db_file_path = os.path.join(backend_args.db_path, db_file_name)
+            db_file_path = os.path.join(backend_args.db_path, db_id, db_file_name)
             
             #if file exists, return it
             if(os.path.exists(db_file_path)):
                 return FileResponse(db_file_path, mediaType="application/vnd.sqlite3", filename=f"{db_file_name}")
             else:
-                raise HTTPException(status_code=404, detail="Database file not found.")
+                raise HTTPException(status_code=404, detail="Database file {file_name} not found at {db_file_path}.")
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

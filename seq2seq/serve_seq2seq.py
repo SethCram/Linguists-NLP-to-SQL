@@ -196,7 +196,7 @@ def main():
             
             #if file exists, return it
             if(os.path.exists(db_file_path)):
-                return FileResponse(db_file_path, mediaType="application/vnd.sqlite3", filename=f"{db_file_name}")
+                return FileResponse(db_file_path, media_type="application/vnd.sqlite3", filename=f"{db_file_name}")
             else:
                 raise HTTPException(status_code=404, detail="Database file {file_name} not found at {db_file_path}.")
 

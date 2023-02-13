@@ -19,6 +19,7 @@ from transformers.hf_argparser import HfArgumentParser
 from transformers.models.auto import AutoConfig, AutoTokenizer, AutoModelForSeq2SeqLM
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from uvicorn import run
 from sqlite3 import Connection, connect, OperationalError
 from seq2seq.utils.pipeline import Text2SQLGenerationPipeline, Text2SQLInput, get_schema
@@ -116,6 +117,16 @@ def main():
 
         # Initialize REST API
         app = FastAPI()
+        
+        #enable communication to api
+        origins = ["*"]
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
         class AskResponse(BaseModel):
             query: str
@@ -198,7 +209,7 @@ def main():
             if(os.path.exists(db_file_path)):
                 return FileResponse(db_file_path, media_type="application/vnd.sqlite3", filename=f"{db_file_name}")
             else:
-                raise HTTPException(status_code=404, detail="Database file {file_name} not found at {db_file_path}.")
+                raise HTTPException(status_code=404, detail=f"Database file {file_name} not found at {db_file_path}.")
 
         # Run app
         run(app=app, host=backend_args.host, port=backend_args.port)

@@ -303,6 +303,7 @@ $ git submodule update --init --recursive
 5. Optionally open in ide vscode via: ‘code .’
 6. Run "make serve" to get api up and running
 7. Optionally navigate to the api UI at http://localhost:8000/docs#/default/ask_ask__db_id___question__get 
+8. Optionally head over to the frontend at https://github.com/SethCram/linguists-client#developer-setup and follow the setup steps
 
 ### Make Changes to the API
 ![Linguists Development Process(2)](https://user-images.githubusercontent.com/86444777/219822755-142293da-a772-4fc9-8298-05be428bb76d.png)

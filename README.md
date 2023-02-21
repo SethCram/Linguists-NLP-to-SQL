@@ -293,7 +293,7 @@ Click on the links to download the models. <a href="https://huggingface.co/tscho
 ### Setup
 1. Install docker desktop
 2. Install WSL2
-3. Run WSL2 under admin
+3. Set WSL2 as docker desktop's base engine
 4. This repository uses git submodules. Clone it like this into the Linux FS:
 ```sh
 $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git

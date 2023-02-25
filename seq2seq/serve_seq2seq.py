@@ -46,10 +46,6 @@ class BackendArguments:
         default="database",
         metadata={"help": "Where to to find the sqlite files"},
     )
-    sql_path: str = field(
-        default="sql",
-        metadata={"help": "Where to to find the sql files"},
-    )
     host: str = field(default="0.0.0.0", metadata={"help": "Bind socket to this host"})
     port: int = field(default=8000, metadata={"help": "Bind socket to this port"})
     device: int = field(
@@ -254,6 +250,9 @@ def main():
             
             return status_code, message
         
+        def create_sql_path(file_id):
+            return os.path.join("sql", file_id + ".sql")
+        
         #endregion Helper Functs
         
         @app.post("/upload_db/")
@@ -310,7 +309,7 @@ def main():
             file_id, file_ext = os.path.splitext(file.filename)
             
             #path to new sql file
-            sql_file_path = os.path.join(backend_args.sql_path, file_id + ".sql")
+            sql_file_path = create_sql_path(file_id)
             
             #store sql file in proper spot
             store_file(file, sql_file_path)
@@ -387,7 +386,7 @@ def main():
                 correct_msg += f"Successfully deleted {filename} in {db_folder_path}'s contents. "
             
             #path to sql file
-            sql_file_path = os.path.join(backend_args.sql_path, file_id + ".sql")
+            sql_file_path = create_sql_path(file_id)
             
             rm_file_code, rm_file_msg = rm_file(sql_file_path)
             

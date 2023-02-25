@@ -1,4 +1,4 @@
-GIT_HEAD_REF := $(shell git rev-parse HEAD) #6a252386bed6d4233f0f13f4562d8ae8608e7445
+GIT_HEAD_REF := $(shell git rev-parse HEAD) 
 
 BASE_IMAGE := pytorch/pytorch:1.9.0-cuda11.1-cudnn8-devel
 
@@ -218,6 +218,7 @@ og-serve: og-pull-eval-image
 .PHONY: serve
 serve: pull-eval-image
 	mkdir -p -m 777 database
+	mkdir -p -m 777 sql
 	mkdir -p -m 777 transformers_cache
 	docker run \
 		-it \

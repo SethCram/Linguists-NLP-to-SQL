@@ -26,6 +26,7 @@ from seq2seq.utils.pipeline import Text2SQLGenerationPipeline, Text2SQLInput, ge
 from seq2seq.utils.picard_model_wrapper import PicardArguments, PicardLauncher, with_picard
 from seq2seq.utils.dataset import DataTrainingArguments
 import shutil
+import subprocess
 
 @dataclass
 class BackendArguments:
@@ -44,6 +45,10 @@ class BackendArguments:
     db_path: str = field(
         default="database",
         metadata={"help": "Where to to find the sqlite files"},
+    )
+    sql_path: str = field(
+        default="sql",
+        metadata={"help": "Where to to find the sql files"},
     )
     host: str = field(default="0.0.0.0", metadata={"help": "Bind socket to this host"})
     port: int = field(default=8000, metadata={"help": "Bind socket to this port"})
@@ -154,9 +159,116 @@ def main():
                 return [response(query=output["generated_text"], conn=conn) for output in outputs]
             finally:
                 conn.close()
+                
+        #region Helper Functs
         
-        @app.post("/upload/")
-        def upload(file: UploadFile = File(...)):
+        def store_file(file, destination: str, byte_mode: bool = False):
+            """Stores file in destination through writing in byte mode. 
+
+            Args:
+                file (_type_): _description_
+                destination (str): file path to copy file to
+                byte_mode (bool): Whether to copy the file in using bytes or not (for binary)
+            Raises:
+                HTTPException: Raises error 500 if problem occures.
+            """
+            
+            operational_mode = "w"
+            
+            if(byte_mode):
+                operational_mode += "b"
+            
+            try:
+                with open(destination, operational_mode) as file_obj:
+                    shutil.copyfileobj(file.file, file_obj)
+            except Exception:
+                raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
+            finally:
+                file.file.close()   
+                
+        def rm_file(file_path: str):
+            """Removes file from file system.
+
+            Args:
+                file_path (str): _description_
+
+            Returns:
+                tuple: status_code, message
+            """
+            try:
+                os.remove(file_path)
+                status_code = 200
+                message = "ok"
+            except OSError as error:
+                status_code = 404
+                message = error
+            except:
+                status_code = 500
+                message = f"Couldn't remove {file_path}"
+                
+            return status_code, message
+            
+        def rm_dir(folder_path: str):
+            """Removes directory and contents from file system.
+
+            Args:
+                folder_path (str): _description_
+
+            Returns:
+                tuple: status_code, message
+            """
+            try:
+                shutil.rmtree(folder_path)
+                status_code = 200
+                message = "ok"
+            except OSError as error:
+                status_code = 404
+                message = error
+            except:
+                status_code = 500
+                message = f"Couldn't remove {folder_path} and its contents"
+            
+            return status_code, message
+        
+        def create_dir(dir_path: str):
+            """Creates directory in file system.
+
+            Args:
+                dir_path (str): _description_
+
+            Returns:
+                tuple: status_code, message
+            """
+            #create path to new db dir
+            try:
+                os.mkdir(dir_path)
+                status_code = 200
+                message = "ok"
+            #if it fails, remove the previously uploaded sql file
+            except FileExistsError:
+                status_code = 400
+                message = "Directory creation failed. A folder using that same name has probably already been uploaded. Rename your uploaded file."
+            except Exception:
+                status_code = 500
+                message = "Directory creation failed."
+            
+            return status_code, message
+        
+        #endregion Helper Functs
+        
+        @app.post("/upload_db/")
+        def upload_db(file: UploadFile = File(...)):
+            """Upload a database file into the file system.
+
+            Args:
+                file (UploadFile, optional): A file in Sqlite3 format. Defaults to File(...).
+
+            Raises:
+                HTTPException: 200 for okay or other for directory/file creation failure
+
+            Returns:
+                json: message
+            """
             
             #separate file name into name + ext
             db_id, file_ext = os.path.splitext(file.filename)
@@ -164,24 +276,132 @@ def main():
             #path to new db dir
             db_folder_path = os.path.join(backend_args.db_path, db_id)
             
-            try:
-                os.mkdir(db_folder_path)
-            except FileExistsError:
-                raise HTTPException(status_code=400, detail="Directory creation failed. Database using that same name has probably already been uploaded. Rename your database file.")
-            except Exception:
-                raise HTTPException(status_code=500, detail="Directory creation failed.")
+            status_code, message = create_dir(db_folder_path)
+            
+            if(status_code != 200):
+                raise HTTPException(status_code=status_code, detail=message)
             
             #path to new db file
             new_file_path = os.path.join(db_folder_path, db_id + ".sqlite")
             
-            try:
-                with open(new_file_path, 'wb') as file_obj:
-                    shutil.copyfileobj(file.file, file_obj)
-            except Exception:
-                raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
-            finally:
-                file.file.close()    
+            store_file(file, new_file_path, byte_mode=True) 
+            
             return {"message": f"Successfully uploaded {file.filename} to {new_file_path}"}
+        
+        @app.post("/upload_sql/")
+        def upload_sql(file: UploadFile = File(...)):
+            """Uploads an sql file into the file system.
+            Generates an sqlite3 formatted file from the sql file.
+            Stores the sqlite3 formatted file in the file system.
+            Undoes operations if any step fails. 
+
+            Args:
+                file (UploadFile, optional): A file containing SQL. Defaults to File(...).
+
+            Raises:
+                HTTPException: Create database directory error
+                HTTPException: Conversion from SQL to database file error
+
+            Returns:
+                json: message
+            """
+            
+            #separate file name into name + ext
+            file_id, file_ext = os.path.splitext(file.filename)
+            
+            #path to new sql file
+            sql_file_path = os.path.join(backend_args.sql_path, file_id + ".sql")
+            
+            #store sql file in proper spot
+            store_file(file, sql_file_path)
+            
+            #path to new db dir
+            db_folder_path = os.path.join(backend_args.db_path, file_id)
+            
+            create_dir_code, create_dir_msg = create_dir(db_folder_path)
+
+            #if dir creation failed
+            if(create_dir_code != 200):
+                #rm file
+                rm_file_code, rm_file_msg = rm_file(sql_file_path)
+                
+                #print locally any file removal error
+                if(rm_file_code != 200):
+                    print(rm_file_msg)
+                
+                #raise error
+                raise HTTPException(status_code=create_dir_code, detail=create_dir_msg)
+            
+            db_filename = file_id + ".sqlite"
+            
+            #path to new db file
+            db_file_path = os.path.join(db_folder_path, db_filename)
+            
+            #if couldn't create database file from sql
+            if(subprocess.call(["sqlite3", f"{db_file_path}", f".read {sql_file_path}"]) != 0):
+                #removed saved SQL file
+                rm_file_code, rm_file_msg = rm_file(sql_file_path)
+                
+                #print locally any file removal error
+                if(rm_file_code != 200):
+                    print(rm_file_msg)
+                
+                #remove created db folder + any contents that snuck in
+                rm_dir_code, rm_dir_msg = rm_dir(db_folder_path)
+                
+                #print locally any file removal error
+                if(rm_dir_code != 200):
+                    print(rm_dir_msg)
+                
+                raise HTTPException(status_code=500, detail="Couldn't create database file from uploaded file. Ensure an SQL file is being uploaded.")
+            
+               
+            return {"message": f"Successfully uploaded {file.filename} to {sql_file_path} and {db_filename} to {db_file_path}"}
+
+        @app.delete("/delete_sql_db/")
+        def delete_sql_db(filename: str):
+            """Delete both the stored sql and database file by the given filename.
+            If no file(s) to delete, 
+
+            Args:
+                filename (str): _description_
+
+            Returns:
+                json: message
+            """
+            
+            correct_msg = ""
+            
+            file_id, file_ext = os.path.splitext(filename)
+            
+            #path to new db dir
+            db_folder_path = os.path.join(backend_args.db_path, file_id)
+            
+            #rm fb folder + contents
+            rm_dir_code, rm_dir_msg = rm_dir(db_folder_path)
+            
+            #print locally any file removal error
+            if(rm_dir_code != 200):
+                print(rm_dir_msg)
+            else:
+                correct_msg += f"Successfully deleted {filename} in {db_folder_path}'s contents. "
+            
+            #path to sql file
+            sql_file_path = os.path.join(backend_args.sql_path, file_id + ".sql")
+            
+            rm_file_code, rm_file_msg = rm_file(sql_file_path)
+            
+            #print locally any file removal error
+            if(rm_file_code != 200):
+                print(rm_file_msg)
+            else:
+                correct_msg += f"Successfully deleted {filename} at {sql_file_path}. "
+                
+            #if neither deletion operations succeeded
+            if(rm_file_msg == 200 and rm_dir_code == 200):
+                raise HTTPException(status_code=rm_dir_code, detail=f"{rm_file_msg} {rm_dir_code}")
+            
+            return {"message": correct_msg}
 
         @app.get("/getDatabases/")
         def getDatabases():

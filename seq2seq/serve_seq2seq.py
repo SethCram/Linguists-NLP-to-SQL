@@ -242,6 +242,18 @@ def main():
 
         @app.get("/ask/{db_id}/{question}")
         def ask(db_id: str, question: str):
+            """_ask the database an English question_
+
+            Args:
+                db_id (str): _database name without an extension_
+                question (str): _english question_
+
+            Raises:
+                HTTPException: _404 or internal error_
+
+            Returns:
+                _list_: _list of results_
+            """
             try:
                 outputs = pipe(
                     inputs=Text2SQLInput(utterance=question, db_id=db_id),
@@ -257,16 +269,16 @@ def main():
         
         @app.post("/upload/")
         def upload(file: UploadFile = File(...)):
-            """Upload a database file into the file system.
+            """_Upload a database file into the file system._
 
             Args:
-                file (UploadFile, optional): A file in Sqlite3 format. Defaults to File(...).
+                file (UploadFile, optional): _A file in Sqlite3 format_. Defaults to File(...).
 
             Raises:
-                HTTPException: 200 for okay or other for directory/file creation failure
+                HTTPException: _200 for okay or other for directory/file creation failure_
 
             Returns:
-                json: message
+                _json_: _message_
             """
             
             #separate file name into name + ext
@@ -289,20 +301,20 @@ def main():
         
         @app.post("/upload/sql")
         def uploadSql(file: UploadFile = File(...)):
-            """Uploads an sql file into the file system.
+            """_Uploads an sql file into the file system.
             Generates an sqlite3 formatted file from the sql file.
             Stores the sqlite3 formatted file in the file system.
-            Undoes operations if any step fails. 
+            Undoes operations if any step fails._ 
 
             Args:
-                file (UploadFile, optional): A file containing SQL. Defaults to File(...).
+                file (UploadFile, optional): _A file containing SQL_. Defaults to File(...).
 
             Raises:
-                HTTPException: Create database directory error
-                HTTPException: Conversion from SQL to database file error
+                HTTPException: _Create database directory error_
+                HTTPException: _Conversion from SQL to database file error_
 
             Returns:
-                json: message
+                _json_: _message_
             """
             
             #separate file name into name + ext
@@ -312,7 +324,7 @@ def main():
             sql_file_path = create_sql_path(file_id)
             
             #store sql file in proper spot
-            store_file(file, sql_file_path)
+            store_file(file, sql_file_path, byte_mode=True)
             
             #path to new db dir
             db_folder_path = os.path.join(backend_args.db_path, file_id)
@@ -359,14 +371,14 @@ def main():
 
         @app.delete("/deleteSqlDb")
         def deleteSqlDb(file_name: str):
-            """Delete both the stored sql and database file by the given file_name.
-            If no file(s) to delete, 
+            """_Delete both the stored sql and database file by the given file_name.
+            If no file to delete in either location, throws an exception._
 
             Args:
-                file_name (str): _description_
+                file_name (str): _File name without extension_
 
             Returns:
-                json: message
+                _json_: _message_
             """
             
             correct_msg = ""
@@ -404,6 +416,14 @@ def main():
 
         @app.get("/getDatabases/")
         def getDatabases():
+            """_Get a list of the queryable database names_
+
+            Raises:
+                HTTPException: _error in listing databases_
+
+            Returns:
+                _list_: _database names as strings_
+            """
             try:
                 #get all names in db folder
                 db_folders = os.listdir(backend_args.db_path)
@@ -415,6 +435,17 @@ def main():
         
         @app.get("/getDatabases/{file_name}", responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}})
         def getDatabaseFile(file_name: str ):
+            """_Retrieve a database file by name_
+
+            Args:
+                file_name (str): _description_
+
+            Raises:
+                HTTPException: _Error 404 that requested database file couldn't be found_
+
+            Returns:
+                _FileResponse_: _database file_
+            """
             
             #separate file name into name + ext (just incase sent w/ an ext)
             db_id, file_ext = os.path.splitext(file_name)

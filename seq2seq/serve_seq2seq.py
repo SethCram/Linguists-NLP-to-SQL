@@ -85,6 +85,105 @@ def main():
         cache_dir=backend_args.cache_dir,
         use_fast=True,
     )
+    
+    #region Helper Functs
+        
+    def store_file(file, destination: str, byte_mode: bool = False):
+        """Stores file in destination through writing in byte mode. 
+
+        Args:
+            file (_type_): _description_
+            destination (str): file path to copy file to
+            byte_mode (bool): Whether to copy the file in using bytes or not (for binary)
+        Raises:
+            HTTPException: Raises error 500 if problem occures.
+        """
+        
+        operational_mode = "w"
+        
+        if(byte_mode):
+            operational_mode += "b"
+        
+        try:
+            with open(destination, operational_mode) as file_obj:
+                shutil.copyfileobj(file.file, file_obj)
+        except Exception:
+            raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
+        finally:
+            file.file.close()   
+            
+    def rm_file(file_path: str):
+        """Removes file from file system.
+
+        Args:
+            file_path (str): _description_
+
+        Returns:
+            tuple: status_code, message
+        """
+        try:
+            os.remove(file_path)
+            status_code = 200
+            message = "ok"
+        except OSError as error:
+            status_code = 404
+            message = error
+        except:
+            status_code = 500
+            message = f"Couldn't remove {file_path}"
+            
+        return status_code, message
+        
+    def rm_dir(folder_path: str):
+        """Removes directory and contents from file system.
+
+        Args:
+            folder_path (str): _description_
+
+        Returns:
+            tuple: status_code, message
+        """
+        try:
+            shutil.rmtree(folder_path)
+            status_code = 200
+            message = "ok"
+        except OSError as error:
+            status_code = 404
+            message = error
+        except:
+            status_code = 500
+            message = f"Couldn't remove {folder_path} and its contents"
+        
+        return status_code, message
+    
+    def create_dir(dir_path: str):
+        """Creates directory in file system.
+
+        Args:
+            dir_path (str): _description_
+
+        Returns:
+            tuple: status_code, message
+        """
+        #create path to new db dir
+        try:
+            os.mkdir(dir_path)
+            status_code = 200
+            message = "ok"
+        #if it fails, remove the previously uploaded sql file
+        except FileExistsError:
+            status_code = 400
+            message = "Directory creation failed. A folder using that same name has probably already been uploaded. Rename your uploaded file."
+        except Exception:
+            status_code = 500
+            message = "Directory creation failed."
+        
+        return status_code, message
+    
+    def create_sql_path(file_id):
+        return os.path.join("sql", file_id + ".sql")
+    
+    #endregion Helper Functs            
 
     # Initialize Picard if necessary
     with PicardLauncher() if picard_args.launch_picard else nullcontext(None):
@@ -155,108 +254,9 @@ def main():
                 return [response(query=output["generated_text"], conn=conn) for output in outputs]
             finally:
                 conn.close()
-                
-        #region Helper Functs
         
-        def store_file(file, destination: str, byte_mode: bool = False):
-            """Stores file in destination through writing in byte mode. 
-
-            Args:
-                file (_type_): _description_
-                destination (str): file path to copy file to
-                byte_mode (bool): Whether to copy the file in using bytes or not (for binary)
-            Raises:
-                HTTPException: Raises error 500 if problem occures.
-            """
-            
-            operational_mode = "w"
-            
-            if(byte_mode):
-                operational_mode += "b"
-            
-            try:
-                with open(destination, operational_mode) as file_obj:
-                    shutil.copyfileobj(file.file, file_obj)
-            except Exception:
-                raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
-            finally:
-                file.file.close()   
-                
-        def rm_file(file_path: str):
-            """Removes file from file system.
-
-            Args:
-                file_path (str): _description_
-
-            Returns:
-                tuple: status_code, message
-            """
-            try:
-                os.remove(file_path)
-                status_code = 200
-                message = "ok"
-            except OSError as error:
-                status_code = 404
-                message = error
-            except:
-                status_code = 500
-                message = f"Couldn't remove {file_path}"
-                
-            return status_code, message
-            
-        def rm_dir(folder_path: str):
-            """Removes directory and contents from file system.
-
-            Args:
-                folder_path (str): _description_
-
-            Returns:
-                tuple: status_code, message
-            """
-            try:
-                shutil.rmtree(folder_path)
-                status_code = 200
-                message = "ok"
-            except OSError as error:
-                status_code = 404
-                message = error
-            except:
-                status_code = 500
-                message = f"Couldn't remove {folder_path} and its contents"
-            
-            return status_code, message
-        
-        def create_dir(dir_path: str):
-            """Creates directory in file system.
-
-            Args:
-                dir_path (str): _description_
-
-            Returns:
-                tuple: status_code, message
-            """
-            #create path to new db dir
-            try:
-                os.mkdir(dir_path)
-                status_code = 200
-                message = "ok"
-            #if it fails, remove the previously uploaded sql file
-            except FileExistsError:
-                status_code = 400
-                message = "Directory creation failed. A folder using that same name has probably already been uploaded. Rename your uploaded file."
-            except Exception:
-                status_code = 500
-                message = "Directory creation failed."
-            
-            return status_code, message
-        
-        def create_sql_path(file_id):
-            return os.path.join("sql", file_id + ".sql")
-        
-        #endregion Helper Functs
-        
-        @app.post("/upload_db/")
-        def upload_db(file: UploadFile = File(...)):
+        @app.post("/upload/")
+        def upload(file: UploadFile = File(...)):
             """Upload a database file into the file system.
 
             Args:
@@ -287,8 +287,8 @@ def main():
             
             return {"message": f"Successfully uploaded {file.filename} to {new_file_path}"}
         
-        @app.post("/upload_sql/")
-        def upload_sql(file: UploadFile = File(...)):
+        @app.post("/upload/sql")
+        def uploadSql(file: UploadFile = File(...)):
             """Uploads an sql file into the file system.
             Generates an sqlite3 formatted file from the sql file.
             Stores the sqlite3 formatted file in the file system.
@@ -357,13 +357,13 @@ def main():
                
             return {"message": f"Successfully uploaded {file.filename} to {sql_file_path} and {db_filename} to {db_file_path}"}
 
-        @app.delete("/delete_sql_db/")
-        def delete_sql_db(filename: str):
-            """Delete both the stored sql and database file by the given filename.
+        @app.delete("/deleteSqlDb")
+        def deleteSqlDb(file_name: str):
+            """Delete both the stored sql and database file by the given file_name.
             If no file(s) to delete, 
 
             Args:
-                filename (str): _description_
+                file_name (str): _description_
 
             Returns:
                 json: message
@@ -371,7 +371,7 @@ def main():
             
             correct_msg = ""
             
-            file_id, file_ext = os.path.splitext(filename)
+            file_id, file_ext = os.path.splitext(file_name)
             
             #path to new db dir
             db_folder_path = os.path.join(backend_args.db_path, file_id)
@@ -383,7 +383,7 @@ def main():
             if(rm_dir_code != 200):
                 print(rm_dir_msg)
             else:
-                correct_msg += f"Successfully deleted {filename} in {db_folder_path}'s contents. "
+                correct_msg += f"Successfully deleted {file_name} in {db_folder_path}'s contents. "
             
             #path to sql file
             sql_file_path = create_sql_path(file_id)
@@ -394,7 +394,7 @@ def main():
             if(rm_file_code != 200):
                 print(rm_file_msg)
             else:
-                correct_msg += f"Successfully deleted {filename} at {sql_file_path}. "
+                correct_msg += f"Successfully deleted {file_name} at {sql_file_path}. "
                 
             #if neither deletion operations succeeded
             if(rm_file_msg == 200 and rm_dir_code == 200):

@@ -46,6 +46,10 @@ class BackendArguments:
         default="database",
         metadata={"help": "Where to to find the sqlite files"},
     )
+    sql_path: str = field(
+        default="sql",
+        metadata={"help": "Where to to find the sqlite files"},
+    )
     host: str = field(default="0.0.0.0", metadata={"help": "Bind socket to this host"})
     port: int = field(default=8000, metadata={"help": "Bind socket to this port"})
     device: int = field(
@@ -96,8 +100,13 @@ def main():
             destination (str): file path to copy file to
             byte_mode (bool): Whether to copy the file in using bytes or not (for binary)
         Raises:
-            HTTPException: Raises error 500 if problem occures.
+            HTTPException: _Raises error 500 if other problem occures._
+            HTTPException: _Raises error 400 if file already exists._
         """
+        
+        #if file exists, return it
+        if( os.path.exists(destination)):
+            raise HTTPException(status_code=400, detail=f"File already exists at {destination}. Rename your uploaded file or delete the pre-exsiting one(s).")
         
         operational_mode = "w"
         
@@ -108,6 +117,9 @@ def main():
             with open(destination, operational_mode) as file_obj:
                 shutil.copyfileobj(file.file, file_obj)
         except Exception:
+            rm_file(destination)
+            #print(f"relative SQL folder exists {os.path.isdir('sql')}")
+            #print(f"backend SQL folder exists {os.path.isdir(backend_args.sql_path)}")
             raise HTTPException(status_code=500, detail="There was an error copying the given file into server storage.")
         finally:
             file.file.close()   
@@ -173,7 +185,7 @@ def main():
         #if it fails, remove the previously uploaded sql file
         except FileExistsError:
             status_code = 400
-            message = "Directory creation failed. A folder using that same name has probably already been uploaded. Rename your uploaded file."
+            message = "Directory creation failed. Rename your uploaded file or delete the pre-exsiting one(s)."
         except Exception:
             status_code = 500
             message = "Directory creation failed."
@@ -181,7 +193,7 @@ def main():
         return status_code, message
     
     def create_sql_path(file_id):
-        return os.path.join("sql", file_id + ".sql")
+        return os.path.join(backend_args.sql_path, file_id + ".sql")
     
     #endregion Helper Functs            
 
@@ -356,6 +368,7 @@ def main():
                 #print locally any file removal error
                 if(rm_file_code != 200):
                     print(rm_file_msg)
+                    #logger.log
                 
                 #remove created db folder + any contents that snuck in
                 rm_dir_code, rm_dir_msg = rm_dir(db_folder_path)
@@ -364,7 +377,7 @@ def main():
                 if(rm_dir_code != 200):
                     print(rm_dir_msg)
                 
-                raise HTTPException(status_code=500, detail="Couldn't create database file from uploaded file. Ensure an SQL file is being uploaded.")
+                raise HTTPException(status_code=400, detail="Couldn't create database file from uploaded file. Ensure an SQL file is being uploaded.")
             
                
             return {"message": f"Successfully uploaded {file.filename} to {sql_file_path} and {db_filename} to {db_file_path}"}

@@ -112,22 +112,6 @@ build-eval-image:
 		--push \
 		https://github.com/SethCram/Linguists-NLP-to-SQL.git#$(GIT_HEAD_REF)
 
-#.PHONY: build-eval-image
-#build-eval-image:
-#	ssh-add
-#	docker buildx build \
-		--builder $(BUILDKIT_BUILDER) \
-		--ssh default=$(SSH_AUTH_SOCK) \
-		-f Dockerfile \
-		--tag sethcram/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
-		--tag sethcram/$(EVAL_IMAGE_NAME):cache \
-		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
-		--target eval \
-		--cache-from type=registry,ref=sethcram/$(EVAL_IMAGE_NAME):cache \
-		--cache-to type=inline \
-		--push \
-		git@github.com:SethCram/Linguists-NLP-to-SQL#$(GIT_HEAD_REF)
-
 .PHONY: og-pull-eval-image
 og-pull-eval-image:
 	docker pull tscholak/$(EVAL_IMAGE_NAME):6a252386bed6d4233f0f13f4562d8ae8608e7445 \
@@ -226,6 +210,7 @@ serve: pull-eval-image
 		--user 13011:13011 \
 		-p 8000:8000 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/sql,target=/sql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		sethcram/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \

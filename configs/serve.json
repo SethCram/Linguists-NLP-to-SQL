@@ -8,6 +8,7 @@
     "normalize_query": true,
     "target_with_db_id": true,
     "db_path": "/database",
+    "sql_path": "/sql",
     "cache_dir": "/transformers_cache",
     "num_beams": 4,
     "num_return_sequences": 1,

@@ -106,7 +106,7 @@ def main():
         
         #if file exists, return it
         if( os.path.exists(destination)):
-            raise HTTPException(status_code=400, detail=f"File already exists at {destination}. Rename your uploaded file or delete the pre-exsiting one(s).")
+            raise HTTPException(status_code=400, detail=f"File already exists at {destination}. Rename your uploaded file or delete the pre-existing one(s).")
         
         operational_mode = "w"
         
@@ -185,7 +185,7 @@ def main():
         #if it fails, remove the previously uploaded sql file
         except FileExistsError:
             status_code = 400
-            message = "Directory creation failed. Rename your uploaded file or delete the pre-exsiting one(s)."
+            message = "Directory creation failed. Rename your uploaded file or delete the pre-existing one(s)."
         except Exception:
             status_code = 500
             message = "Directory creation failed."
@@ -422,8 +422,8 @@ def main():
                 correct_msg += f"Successfully deleted {file_name} at {sql_file_path}. "
                 
             #if neither deletion operations succeeded
-            if(rm_file_msg == 200 and rm_dir_code == 200):
-                raise HTTPException(status_code=rm_dir_code, detail=f"{rm_file_msg} {rm_dir_code}")
+            if(rm_file_msg != 200 and rm_dir_code != 200):
+                raise HTTPException(status_code=rm_dir_code, detail=f"{rm_file_msg} {rm_dir_msg}")
             
             return {"message": correct_msg}
 

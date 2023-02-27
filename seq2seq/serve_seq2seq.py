@@ -287,7 +287,8 @@ def main():
                 file (UploadFile, optional): _A file in Sqlite3 format_. Defaults to File(...).
 
             Raises:
-                HTTPException: _200 for okay or other for directory/file creation failure_
+                HTTPException: _500 for unkown problem_
+                HTTPException: _400 for directory/file creation failure or if uploaded file isn't a database_
 
             Returns:
                 _json_: _message_
@@ -308,6 +309,17 @@ def main():
             new_file_path = os.path.join(db_folder_path, db_id + ".sqlite")
             
             store_file(file, new_file_path, byte_mode=True) 
+            
+            #if uploaded file isn't a database
+            if(subprocess.call(["sqlite3", f"{new_file_path}", f".schema"]) != 0):
+                #remove uploaded dir and its contents
+                status_code, msg = rm_dir(db_folder_path)
+                
+                #log msg if rm dir fails
+                if(status_code != 200):
+                    print(msg)
+                    
+                raise HTTPException(status_code=400, detail="The uploaded file isn't a database.")
             
             return {"message": f"Successfully uploaded {file.filename} to {new_file_path}"}
         

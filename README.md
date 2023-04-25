@@ -387,17 +387,17 @@ All images are tagged with the current commit hash. The images are built with th
 
 ### Deployment Instructions 
 1. Clone the repository and make sure it's up to date
-```sh
-$ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
-$ cd Linguists-NLP-to-SQL
-$ git submodule update --init --recursive
-```
+    ```sh
+    $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
+    $ cd Linguists-NLP-to-SQL
+    $ git submodule update --init --recursive
+    ```
 2. Download Docker and Make
-    i. on Ubuntu distributions
+    1. on Ubuntu distributions
         ```sh
         $ sudo apt install docker.io make
         ```
-    ii. on RHEL distributions
+    2. on RHEL distributions
         ```sh
         $ sudo yum install -y yum-utils
         $ sudo yum-config-manager \
@@ -409,12 +409,12 @@ $ git submodule update --init --recursive
     ```sh
     $ make pull-eval-image
     ```
-    i. If docker can't be accessed, try granting the current user docker access (may require user relogin)
+    1. If docker can't be accessed, try granting the current user docker access (may require user relogin)
         ```sh
         $ sudo usermod -a -G docker $USER
         ```
 4. Launch the API on port 8000 (need to be in the root of the repo)
-```sh
-$ make serve
-```
+    ```sh
+    $ make serve
+    ```
 5. Verify the API is running by navigating to http://localhost:8000/docs#/

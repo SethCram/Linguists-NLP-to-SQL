@@ -393,6 +393,8 @@ $ cd Linguists-NLP-to-SQL
 $ git submodule update --init --recursive
 ```
 2. Download Docker and Make
+
+
 2.1 on Ubuntu distributions
 ```sh
 $ sudo apt install docker.io make

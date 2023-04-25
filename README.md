@@ -385,7 +385,7 @@ There are three docker images that can be used to run the code:
 
 All images are tagged with the current commit hash. The images are built with the buildx tool which is available in the latest docker-ce. Use `make init-buildkit` to initialize the buildx tool on your machine. You can then use `make build-dev-image`, `make build-train-image`, etc. to rebuild the images. Local changes to the code will not be reflected in the docker images unless they are committed to git.
 
-### Deployment Instructions (on Ubuntu Linux)
+### Deployment Instructions 
 1. Clone the repository and make sure it's up to date
 ```sh
 $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
@@ -393,8 +393,17 @@ $ cd Linguists-NLP-to-SQL
 $ git submodule update --init --recursive
 ```
 2. Download Docker and Make
+2.1 on Ubuntu distributions
 ```sh
 $ sudo apt install docker.io make
+```
+2.2 on RHEL distributions
+```sh
+$ sudo yum install -y yum-utils
+$ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+$ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
 ```
 3. Install the docker image (need to be in the root of the repo)
 ```sh

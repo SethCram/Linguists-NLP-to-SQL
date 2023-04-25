@@ -393,28 +393,26 @@ $ cd Linguists-NLP-to-SQL
 $ git submodule update --init --recursive
 ```
 2. Download Docker and Make
-
-
-2.1 on Ubuntu distributions
-```sh
-$ sudo apt install docker.io make
-```
-2.2 on RHEL distributions
-```sh
-$ sudo yum install -y yum-utils
-$ sudo yum-config-manager \
-    --add-repo \
-    https://download.docker.com/linux/centos/docker-ce.repo
-$ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
-```
+    i. on Ubuntu distributions
+        ```sh
+        $ sudo apt install docker.io make
+        ```
+    ii. on RHEL distributions
+        ```sh
+        $ sudo yum install -y yum-utils
+        $ sudo yum-config-manager \
+            --add-repo \
+            https://download.docker.com/linux/centos/docker-ce.repo
+        $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
+        ```
 3. Install the docker image (need to be in the root of the repo)
-```sh
-$ make pull-eval-image
-```
-3.1 If docker can't be accessed, try granting the current user docker access (may require user relogin)
-```sh
-$ sudo usermod -a -G docker $USER
-```
+    ```sh
+    $ make pull-eval-image
+    ```
+    i. If docker can't be accessed, try granting the current user docker access (may require user relogin)
+        ```sh
+        $ sudo usermod -a -G docker $USER
+        ```
 4. Launch the API on port 8000 (need to be in the root of the repo)
 ```sh
 $ make serve

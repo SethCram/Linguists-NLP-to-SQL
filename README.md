@@ -392,7 +392,7 @@ All images are tagged with the current commit hash. The images are built with th
     $ cd Linguists-NLP-to-SQL
     $ git submodule update --init --recursive
     ```
-2. Download Docker and Make
+2. Download Docker and Make 
     1. on Ubuntu distributions
         ```sh
         $ sudo apt install docker.io make
@@ -405,7 +405,16 @@ All images are tagged with the current commit hash. The images are built with th
             https://download.docker.com/linux/centos/docker-ce.repo
         $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
         ```
-3. Install the docker image (need to be in the root of the repo)
+3. Install server software nginx
+    1. on Ubuntu-based distributions
+        ```sh
+        $ sudo apt install nginx
+        ```
+    2. on RHEL-based distributions
+        ```sh
+        $ sudo yum install nginx
+        ```
+4. Install the docker image 
     ```sh
     $ make pull-eval-image
     ```
@@ -413,8 +422,35 @@ All images are tagged with the current commit hash. The images are built with th
         ```sh
         $ sudo usermod -a -G docker $USER
         ```
-4. Launch the API on port 8000 (need to be in the root of the repo)
+5. Redirect the server traffic to the web application
+    ```sh
+    $ sudo vi /etc/nginx/nginx.conf
+    ```
+    add this inside the "server" block:
+    ```
+    location /docs# {
+            proxy_pass http://localhost:8000/docs#/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+    ```
+    verify the syntax of the config file is okay and start nginx using it
+    ```sh
+    $ sudo nginx -t
+    $ sudo service nginx restart
+    ```
+    1. if SELinux is being used, tell it to allow httpd traffic: `sudo setsebool -P httpd_can_network_connect 1`
+6. Launch the API on port 8000 
     ```sh
     $ make serve
     ```
-5. Verify the API is running by navigating to http://localhost:8000/docs#/
+7. Cancel the process with Ctrl-C now that we verified that it launched okay
+8. Relaunch the API in the background
+    ```sh
+    $ nohup make serve &
+    ```
+9. Verify the API is running by navigating to http://[publicIPAddress]/docs#
+10. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

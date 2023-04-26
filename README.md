@@ -386,16 +386,13 @@ There are three docker images that can be used to run the code:
 All images are tagged with the current commit hash. The images are built with the buildx tool which is available in the latest docker-ce. Use `make init-buildkit` to initialize the buildx tool on your machine. You can then use `make build-dev-image`, `make build-train-image`, etc. to rebuild the images. Local changes to the code will not be reflected in the docker images unless they are committed to git.
 
 ### Deployment Instructions 
-1. Clone the repository and make sure it's up to date
-    ```sh
-    $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
-    $ cd Linguists-NLP-to-SQL
-    $ git submodule update --init --recursive
-    ```
-2. Download Docker and Make 
+
+Make sure the server chosen has atleast 30GBs of available storage and 10GBs of RAM since the docker image is around 25GBs, large database files are stored server-side, and the docker container likely requires atleast 10GBs of RAM to build and run. 
+
+1. Download Docker, Make, and git
     1. on Ubuntu distributions
         ```sh
-        $ sudo apt install docker.io make
+        $ sudo apt install docker.io make git
         ```
     2. on RHEL distributions
         ```sh
@@ -403,8 +400,14 @@ All images are tagged with the current commit hash. The images are built with th
         $ sudo yum-config-manager \
             --add-repo \
             https://download.docker.com/linux/centos/docker-ce.repo
-        $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
+        $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make git
         ```
+2. Clone the repository and make sure it's up to date
+    ```sh
+    $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
+    $ cd Linguists-NLP-to-SQL
+    $ git submodule update --init --recursive
+    ```
 3. allow http traffic through port 80
     1. on firewalld 
         ```sh

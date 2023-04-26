@@ -405,7 +405,16 @@ All images are tagged with the current commit hash. The images are built with th
             https://download.docker.com/linux/centos/docker-ce.repo
         $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make
         ```
-3. Install server software nginx
+3. allow http traffic through port 80
+    1. on firewalld 
+        ```sh
+        $ sudo sh -c "firewall-cmd --permanent --zone=public --add-service=http && firewall-cmd --reload"
+        ```
+    2. on iptables
+        ```sh
+        $ sudo sh -c "iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT && service iptables save"
+        ```
+4. Install server software nginx
     1. on Ubuntu-based distributions
         ```sh
         $ sudo apt install nginx
@@ -414,7 +423,7 @@ All images are tagged with the current commit hash. The images are built with th
         ```sh
         $ sudo yum install nginx
         ```
-4. Install the docker image 
+5. Install the docker image 
     ```sh
     $ make pull-eval-image
     ```
@@ -422,7 +431,7 @@ All images are tagged with the current commit hash. The images are built with th
         ```sh
         $ sudo usermod -a -G docker $USER
         ```
-5. Redirect the server traffic to the web application
+6. Redirect the server traffic to the web application
     ```sh
     $ sudo vi /etc/nginx/nginx.conf
     ```
@@ -443,14 +452,14 @@ All images are tagged with the current commit hash. The images are built with th
     $ sudo service nginx restart
     ```
     1. if SELinux is being used, tell it to allow httpd traffic: `sudo setsebool -P httpd_can_network_connect 1`
-6. Launch the API on port 8000 
+7. Launch the API on port 8000 
     ```sh
     $ make serve
     ```
-7. Cancel the process with Ctrl-C now that we verified that it launched okay
-8. Relaunch the API in the background
+8. Cancel the process with Ctrl-C now that we verified that it launched okay
+9. Relaunch the API in the background
     ```sh
     $ nohup make serve &
     ```
-9. Verify the API is running by navigating to http://[publicIPAddress]/docs#
-10. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 
+10. Verify the API is running by navigating to http://[publicIPAddress]/docs#
+11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

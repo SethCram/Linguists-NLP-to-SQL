@@ -431,6 +431,7 @@ All images are tagged with the current commit hash. The images are built with th
         ```sh
         $ sudo usermod -a -G docker $USER
         ```
+    2. If prompted for image selection, select the 3rd docker image (the one starting with "docker.io")    
 6. Redirect the server traffic to the web application
     ```sh
     $ sudo vi /etc/nginx/nginx.conf

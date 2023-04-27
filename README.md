@@ -392,11 +392,11 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
 1. Make sure the package manager is up to date
     1. on Ubuntu distributions (Ubuntu, Debian, Kali, etc.)  
         ```sh
-        sudo apt-get update
+        sudo apt-get -y update
         ```
     2. on RHEL distributions (RHEL, Rocky, Fedora, CentOS, etc.)
         ```sh
-        sudo yum update
+        sudo yum -y update
         ```
 2. Remove old docker versions and download Docker, Make, nginx, and git
     1. on Ubuntu distributions

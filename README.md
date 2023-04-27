@@ -385,59 +385,71 @@ There are three docker images that can be used to run the code:
 
 All images are tagged with the current commit hash. The images are built with the buildx tool which is available in the latest docker-ce. Use `make init-buildkit` to initialize the buildx tool on your machine. You can then use `make build-dev-image`, `make build-train-image`, etc. to rebuild the images. Local changes to the code will not be reflected in the docker images unless they are committed to git.
 
-### Deployment Instructions 
+### Deployment Instructions (on Linux)
 
 Make sure the server chosen has atleast 30GBs of available storage and 10GBs of RAM since the docker image is around 25GBs, large database files are stored server-side, and the docker container likely requires atleast 10GBs of RAM to build and run. 
 
-1. Download Docker, Make, and git
+1. Make sure the package manager is up to date
     1. on Ubuntu distributions
         ```sh
-        $ sudo apt install docker.io make git
+        sudo apt-get update
         ```
     2. on RHEL distributions
         ```sh
-        $ sudo yum install -y yum-utils
-        $ sudo yum-config-manager \
+        sudo yum update
+        ```
+2. Remove old docker versions and download Docker, Make, nginx, and git
+    1. on Ubuntu distributions
+        ```sh
+        sudo apt-get remove docker docker-engine docker.io containerd runc
+        sudo apt install docker.io make nginx git
+        ```
+    2. on RHEL distributions
+        ```sh
+        sudo yum remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-engine \
+                  podman \
+                  runc
+        sudo yum install -y yum-utils
+        sudo yum-config-manager \
             --add-repo \
             https://download.docker.com/linux/centos/docker-ce.repo
-        $ sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make git
+        sudo yum install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin make nginx git
         ```
-2. Clone the repository and make sure it's up to date
+3. Clone the repository and make sure it's up to date
     ```sh
-    $ git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
-    $ cd Linguists-NLP-to-SQL
-    $ git submodule update --init --recursive
+    git clone https://github.com/SethCram/Linguists-NLP-to-SQL.git
+    cd Linguists-NLP-to-SQL
+    git submodule update --init --recursive
     ```
-3. allow http traffic through port 80
+4. Allow http traffic through port 80
     1. on firewalld 
         ```sh
-        $ sudo sh -c "firewall-cmd --permanent --zone=public --add-service=http && firewall-cmd --reload"
+        sudo sh -c "firewall-cmd --permanent --zone=public --add-service=http && firewall-cmd --reload"
         ```
     2. on iptables
         ```sh
-        $ sudo sh -c "iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT && service iptables save"
+        sudo sh -c "iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT && service iptables save"
         ```
-4. Install server software nginx
-    1. on Ubuntu-based distributions
-        ```sh
-        $ sudo apt install nginx
-        ```
-    2. on RHEL-based distributions
-        ```sh
-        $ sudo yum install nginx
-        ```
-5. Install the docker image 
+5. Start docker and install the docker image 
     ```sh
-    $ make pull-eval-image
+    sudo systemctl start docker
+    sudo make pull-eval-image
     ```
     1. If docker can't be accessed, try granting the current user docker access (may require user relogin)
         ```sh
-        $ sudo usermod -a -G docker $USER
+        sudo usermod -a -G docker $USER
         ```
     2. If prompted for image selection, select the 3rd docker image (the one starting with "docker.io")    
 6. Redirect the server traffic to the web application
     ```sh
-    $ sudo vi /etc/nginx/nginx.conf
+    sudo vi /etc/nginx/nginx.conf
     ```
     add this inside the "server" block:
     ```
@@ -452,18 +464,18 @@ Make sure the server chosen has atleast 30GBs of available storage and 10GBs of 
     ```
     verify the syntax of the config file is okay and start nginx using it
     ```sh
-    $ sudo nginx -t
-    $ sudo service nginx restart
+    sudo nginx -t
+    sudo service nginx restart
     ```
     1. if SELinux is being used, tell it to allow httpd traffic: `sudo setsebool -P httpd_can_network_connect 1`
 7. Launch the API on port 8000 
     ```sh
-    $ make serve
+    sudo make serve
     ```
 8. Cancel the process with Ctrl-C now that we verified that it launched okay
 9. Relaunch the API in the background
     ```sh
-    $ nohup make serve &
+    sudo nohup make serve &
     ```
-10. Verify the API is running by navigating to http://[publicIPAddress]/docs#
+10. Verify the API is running by navigating to http://[publicIPAddress]/docs# in a browser or `curl http://[publicIPAddress]/docs#`
 11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

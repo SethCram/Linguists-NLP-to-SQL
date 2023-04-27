@@ -387,7 +387,7 @@ All images are tagged with the current commit hash. The images are built with th
 
 ### Deployment Instructions (on Linux)
 
-Make sure the server chosen has atleast 40GBs of available storage and 10GBs of RAM since the docker image is around 25GBs, huggingface model is 3GB, large database files are stored server-side, and the docker container likely requires atleast 10GBs of RAM to build and run. The recommended server setup is Rocky Linux 8 connected to the internet via ethernet or wifi.
+Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since the docker image is around 25GBs, huggingface model is 3GB, large database files are stored server-side, and the docker container likely requires atleast 10GBs of RAM to build and run. The recommended server setup is Rocky Linux 8 connected to the internet via ethernet or wifi.
 
 1. Make sure the package manager is up to date
     1. on Ubuntu distributions

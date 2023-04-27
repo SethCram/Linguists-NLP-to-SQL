@@ -456,11 +456,24 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     location /docs# {
             proxy_pass http://localhost:8000/docs#/;
             proxy_http_version 1.1;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
+            proxy_set_header Connection $connection_upgrade;
             proxy_cache_bypass $http_upgrade;
         }
+    ```
+    add this within the "http" block but outside the "server" block:
+    ```
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+    
+    upstream uvicorn {
+        server unix:/tmp/uvicorn.sock;
+    }
     ```
     verify the syntax of the config file is okay and start nginx using it
     ```sh
@@ -476,6 +489,10 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
 9. Relaunch the API in the background
     ```sh
     sudo nohup make serve &
+    ```
+    Enter key
+    ```sh
+    bg
     ```
 10. Verify the API is running by navigating to http://[publicIPAddress]/docs# in a browser or `curl http://[publicIPAddress]/docs#`
 11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

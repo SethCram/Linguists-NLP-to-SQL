@@ -252,7 +252,7 @@ def main():
                     status_code=500, detail=f'while executing "{query}", the following error occurred: {e.args[0]}'
                 )
 
-        @app.get("/ask/{db_id}/{question}")
+        @app.get("/api/ask/{db_id}/{question}")
         def ask(db_id: str, question: str):
             """_ask the database an English question_
 
@@ -279,7 +279,7 @@ def main():
             finally:
                 conn.close()
         
-        @app.post("/upload/")
+        @app.post("/api/upload/")
         def upload(file: UploadFile = File(...)):
             """_Upload a database file into the file system._
 
@@ -323,7 +323,7 @@ def main():
             
             return {"message": f"Successfully uploaded {file.filename} to {new_file_path}"}
         
-        @app.post("/upload/sql")
+        @app.post("/api/upload/sql")
         def uploadSql(file: UploadFile = File(...)):
             """_Uploads an sql file into the file system.
             Generates an sqlite3 formatted file from the sql file.
@@ -394,7 +394,7 @@ def main():
                
             return {"message": f"Successfully uploaded {file.filename} to {sql_file_path} and {db_filename} to {db_file_path}"}
 
-        @app.delete("/deleteSqlDb")
+        @app.delete("/api/deleteSqlDb")
         def deleteSqlDb(file_name: str):
             """_Delete both the stored sql and database file by the given file_name.
             If no file to delete in either location, throws an exception._
@@ -439,7 +439,7 @@ def main():
             
             return {"message": correct_msg}
 
-        @app.get("/getDatabases/")
+        @app.get("/api/getDatabases/")
         def getDatabases():
             """_Get a list of the queryable database names_
 
@@ -458,7 +458,7 @@ def main():
             #take only the directories within the db folder names
             return [name for name in db_folders if os.path.isdir(os.path.join(backend_args.db_path, name))]
         
-        @app.get("/getDatabases/{file_name}", responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}})
+        @app.get("/api/getDatabases/{file_name}", responses={200: {"content": {"application/vnd.sqlite3" : {"example": "No example available."}}}})
         def getDatabaseFile(file_name: str ):
             """_Retrieve a database file by name_
 
@@ -487,7 +487,7 @@ def main():
                 raise HTTPException(status_code=404, detail=f"Database file {file_name} not found at {db_file_path}.")
 
         # Run app
-        run(app=app, host=backend_args.host, port=backend_args.port)
+        run(app=app, host=backend_args.host, port=backend_args.port, forwarded_allow_ips='*')
 
 
 if __name__ == "__main__":

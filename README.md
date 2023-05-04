@@ -448,7 +448,7 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
         sudo usermod -a -G docker $USER
         ```
     2. If prompted for image selection, select the 3rd docker image (the one starting with "docker.io")    
-6. Redirect the server traffic to the web application
+6. Redirect the server traffic to the api
     ```sh
     sudo vi /etc/nginx/nginx.conf
     ```
@@ -487,9 +487,10 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     sudo make serve
     ```
 8. Cancel the process with Ctrl-C now that we verified that it launched okay
-9. Relaunch the API in the background indefinitely and on server restart 
+9. Relaunch the API in the background, indefinitely, and on server restart 
     ```sh
     sudo make serve_prod 
     ```
-10. Verify the API is running by navigating to http://[publicIPAddress]/api/getDatabases/ in a browser or `curl http://[publicIPAddress]/api/getDatabases/` and seeing a list of uploaded databases
+10. Verify the API is running
+    1. Navigate to http://[publicIPAddress]/api/getDatabases/ in a browser or run `curl http://[publicIPAddress]/api/getDatabases/` and see either a list of uploaded databases or an error 500 with "There was an error when attempting to list all the database folders." message. Either way, the backend is running properly.
 11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

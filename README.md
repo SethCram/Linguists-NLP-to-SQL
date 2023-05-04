@@ -437,8 +437,9 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
         ```sh
         sudo sh -c "iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT && service iptables save"
         ```
-5. Start docker and install the docker image 
+5. Make sure docker runs on server restart, start docker, and install the docker image 
     ```sh
+    sudo systemctl enable docker.service
     sudo systemctl start docker
     sudo make pull-eval-image
     ```
@@ -481,14 +482,14 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     sudo service nginx restart
     ```
     1. if SELinux is being used, tell it to allow httpd traffic: `sudo setsebool -P httpd_can_network_connect 1`
-7. Launch the API on port 8000 
+7. Launch the API interactively on port 8000 
     ```sh
     sudo make serve
     ```
 8. Cancel the process with Ctrl-C now that we verified that it launched okay
-9. Relaunch the API indefinitely in the background so it won't stop running once you logout
+9. Relaunch the API in the background indefinitely and on server restart 
     ```sh
-    sudo nohup make serve &
+    sudo make serve_prod 
     ```
 10. Verify the API is running by navigating to http://[publicIPAddress]/api/getDatabases/ in a browser or `curl http://[publicIPAddress]/api/getDatabases/` and seeing a list of uploaded databases
 11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

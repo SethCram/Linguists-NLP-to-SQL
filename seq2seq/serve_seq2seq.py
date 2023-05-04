@@ -26,7 +26,7 @@ from seq2seq.utils.picard_model_wrapper import PicardArguments, PicardLauncher, 
 from seq2seq.utils.dataset import DataTrainingArguments
 import shutil
 import subprocess
-import gunicorn.app.base
+from uvicorn import run
 
 @dataclass
 class BackendArguments:
@@ -486,32 +486,8 @@ def main():
             else:
                 raise HTTPException(status_code=404, detail=f"Database file {file_name} not found at {db_file_path}.")
 
-        class StandaloneApplication(gunicorn.app.base.BaseApplication):
-
-            def __init__(self, app, options=None):
-                self.options = options or {}
-                self.application = app
-                super().__init__()
-
-            def load_config(self):
-                config = {key: value for key, value in self.options.items()
-                        if key in self.cfg.settings and value is not None}
-                for key, value in config.items():
-                    self.cfg.set(key.lower(), value)
-
-            def load(self):
-                return self.application
-            
-        # Use a debugging session in port 5001    
-        options = {
-            'bind': '%s:%s' % ('0.0.0.0', '8000'),
-            'workers': 1,#number_of_workers(),
-            # 'threads': number_of_workers(),
-            'timeout': 120,
-            'forwarded_allow_ips': '*',
-            "worker_class": 'uvicorn.workers.UvicornWorker'
-        }
-        StandaloneApplication(app, options).run()
+        # Run app
+        run(app=app, host=backend_args.host, port=backend_args.port, forwarded_allow_ips='*')
 
 
 if __name__ == "__main__":

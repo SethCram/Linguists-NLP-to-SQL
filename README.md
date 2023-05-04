@@ -453,8 +453,8 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     ```
     add this inside the "server" block:
     ```
-    location /docs# {
-            proxy_pass http://localhost:8000/docs#/;
+    location /api {
+            proxy_pass http://localhost:8000/;
             proxy_http_version 1.1;
             proxy_set_header Host $http_host;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -486,13 +486,9 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     sudo make serve
     ```
 8. Cancel the process with Ctrl-C now that we verified that it launched okay
-9. Relaunch the API in the background
+9. Relaunch the API indefinitely in the background so it won't stop running once you logout
     ```sh
     sudo nohup make serve &
     ```
-    Enter key
-    ```sh
-    bg
-    ```
-10. Verify the API is running by navigating to http://[publicIPAddress]/docs# in a browser or `curl http://[publicIPAddress]/docs#`
+10. Verify the API is running by navigating to http://[publicIPAddress]/api/getDatabases/ in a browser or `curl http://[publicIPAddress]/api/getDatabases/` and seeing a list of uploaded databases
 11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

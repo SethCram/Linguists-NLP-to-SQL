@@ -82,22 +82,6 @@ build-train-image:
 pull-train-image:
 	docker pull tscholak/$(TRAIN_IMAGE_NAME):$(GIT_HEAD_REF)
 
-.PHONY: og-build-eval-image
-og-build-eval-image:
-	ssh-add
-	docker buildx build \
-		--builder $(BUILDKIT_BUILDER) \
-		--ssh default=$(SSH_AUTH_SOCK) \
-		-f Dockerfile \
-		--tag tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
-		--tag tscholak/$(EVAL_IMAGE_NAME):cache \
-		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
-		--target eval \
-		--cache-from type=registry,ref=tscholak/$(EVAL_IMAGE_NAME):cache \
-		--cache-to type=inline \
-		--push \
-		git@github.com:ElementAI/picard#$(GIT_HEAD_REF)
-
 .PHONY: build-eval-image
 build-eval-image:
 	docker buildx build \
@@ -111,10 +95,6 @@ build-eval-image:
 		--cache-to type=inline \
 		--push \
 		https://github.com/SethCram/Linguists-NLP-to-SQL.git#$(GIT_HEAD_REF)
-
-.PHONY: og-pull-eval-image
-og-pull-eval-image:
-	docker pull tscholak/$(EVAL_IMAGE_NAME):6a252386bed6d4233f0f13f4562d8ae8608e7445 \
 
 .PHONY: pull-eval-image
 pull-eval-image:
@@ -184,19 +164,21 @@ eval_cosql: pull-eval-image
 		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_seq2seq.py configs/eval_cosql.json"
 
-.PHONY: og-serve
-og-serve: og-pull-eval-image
+.PHONY: serve_prod
+serve_prod: pull-eval-image
 	mkdir -p -m 777 database
+	mkdir -p -m 777 sql
 	mkdir -p -m 777 transformers_cache
 	docker run \
-		-it \
-		--rm \
+		-d \
+		--restart always \
 		--user 13011:13011 \
 		-p 8000:8000 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
+		--mount type=bind,source=$(BASE_DIR)/sql,target=/sql \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
-		tscholak/$(EVAL_IMAGE_NAME):6a252386bed6d4233f0f13f4562d8ae8608e7445 \
+		sethcram/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
 		/bin/bash -c "python seq2seq/serve_seq2seq.py configs/serve.json"
 
 .PHONY: serve

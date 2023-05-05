@@ -437,9 +437,13 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
         ```sh
         sudo sh -c "iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT && service iptables save"
         ```
-5. Make sure docker runs on server restart, start docker, and install the docker image 
+5. Make sure docker and nginx automatically run on server restart
     ```sh
     sudo systemctl enable docker.service
+    sudo systemctl enable nginx
+    ```
+6. Start docker and install the docker image 
+    ```sh
     sudo systemctl start docker
     sudo make pull-eval-image
     ```
@@ -448,7 +452,7 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
         sudo usermod -a -G docker $USER
         ```
     2. If prompted for image selection, select the 3rd docker image (the one starting with "docker.io")    
-6. Redirect the server traffic to the api
+7. Redirect the server traffic to the api
     ```sh
     sudo vi /etc/nginx/nginx.conf
     ```
@@ -482,18 +486,18 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     sudo service nginx restart
     ```
     1. if SELinux is being used, tell it to allow httpd traffic: `sudo setsebool -P httpd_can_network_connect 1`
-7. Launch the API interactively on port 8000 
+8. Launch the API interactively on port 8000 
     ```sh
     sudo make serve
     ```
-8. Cancel the process with Ctrl-C now that we verified that it launched okay
-9. Relaunch the API in the background, indefinitely, and on server restart 
+9. Cancel the process with Ctrl-C now that we verified that it launched okay
+10. Relaunch the API in the background, indefinitely, and on server restart 
     ```sh
     sudo make serve_prod 
     ```
-10. Verify the API is running
+11. Verify the API is running
     1. Navigate to http://[publicIPAddress]/api/getDatabases/ in a browser or run `curl http://[publicIPAddress]/api/getDatabases/` and see either a list of uploaded databases or an error 500 with "There was an error when attempting to list all the database folders." message. Either way, the backend is running properly.
-11. Optionally, verify the API's fastAPI/Swagger/UI page is live
+12. Optionally, verify the API's fastAPI/Swagger/UI page is live
     1. Navigate to http://[publicIPAddress]:8000/docs#/ in a browser or run `curl http://[publicIPAddress]:8000/docs#/`
     2. If this fails, try installing Python, pip, and 'uvicorn[standard]' then `docker ps` and `docker stop [containerId]` and `docker rm [containerId]` and rerun `sudo make serve_prod` and attempt to visit the API's UI again
-12. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 
+13. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 

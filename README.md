@@ -301,12 +301,34 @@ $ cd Linguists-NLP-to-SQL
 $ git submodule update --init --recursive
 ```
 5. Optionally open the repo in ide vscode via: `code .`
-6. Run "make serve" to get api up and running
+6. Run `make serve` to get api up and running
 7. Optionally navigate to the api UI at http://localhost:8000/docs#/default/ask_ask__db_id___question__get 
 8. Optionally head over to the frontend at https://github.com/SethCram/linguists-client#developer-setup and follow the setup steps
 
 ### Make Changes to the API
 ![Linguists Development Process(2)](https://user-images.githubusercontent.com/86444777/219822755-142293da-a772-4fc9-8298-05be428bb76d.png)
+1. Commit new changes to the github repository
+2. Open up the Makefile and navigate to the top
+3. Change the image's id to the most recent git commit id, so the next image built doesn't overwrite or conflict with a pre-existing one, and the code used to construct the new image is from the most recent git commit
+    ```
+    GIT_HEAD_REF := $(shell git rev-parse HEAD)
+    ```
+4. Make sure your logged in as the owner or a collaborator of the docker hub's repository on docker desktop
+5. Build a new image for evaluation (can takes up to 2 hours)
+    ```sh
+    make build-eval-image
+    ```
+6. Once again, change the Makefile's image id to ensure we're pulling down the correct image to test
+    ```
+    GIT_HEAD_REF := [hardcodedGitCommitIdUsedToBuildTheImage]
+    ```
+7. Pull down the new image and test it out 
+    ```sh
+    make serve
+    ```
+8. If the image is stable, feel free to commit the new makefile with `GIT_HEAD_REF := [hardcodedGitCommitIdUsedToBuildTheImage]` to the repository 
+
+- if issues are encountered, feel free to submit a Github issue or refer to the pre-exisiting ones located at https://github.com/ServiceNow/picard/issues
 
 ### Training
 

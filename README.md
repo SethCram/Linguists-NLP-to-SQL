@@ -493,4 +493,7 @@ Make sure the server chosen has atleast 50GBs of storage and 10GBs of RAM since 
     ```
 10. Verify the API is running
     1. Navigate to http://[publicIPAddress]/api/getDatabases/ in a browser or run `curl http://[publicIPAddress]/api/getDatabases/` and see either a list of uploaded databases or an error 500 with "There was an error when attempting to list all the database folders." message. Either way, the backend is running properly.
-11. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 
+11. Optionally, verify the API's fastAPI/Swagger/UI page is live
+    1. Navigate to http://[publicIPAddress]:8000/docs#/ in a browser or run `curl http://[publicIPAddress]:8000/docs#/`
+    2. If this fails, try installing Python, pip, and 'uvicorn[standard]' then `docker ps` and `docker stop [containerId]` and `docker rm [containerId]` and rerun `sudo make serve_prod` and attempt to visit the API's UI again
+12. Head over to the [frontend deployment instructions](https://github.com/SethCram/linguists-client/blob/master/README.md#deployment-instructions-on-ubuntu-linux) 
